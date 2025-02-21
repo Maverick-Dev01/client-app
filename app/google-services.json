@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "870280279515",
+    "project_id": "devicemanagersystem-70194",
+    "storage_bucket": "devicemanagersystem-70194.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870280279515:android:5f571976eab3e0c623e3fe",
+        "android_client_info": {
+          "package_name": "com.tuempresa.adminapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAg1h-5BEm3MqictbcO3NtLYd8YzrCl8wc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870280279515:android:f8713f7d110f9b6523e3fe",
+        "android_client_info": {
+          "package_name": "com.tuempresa.clientapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAg1h-5BEm3MqictbcO3NtLYd8YzrCl8wc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
