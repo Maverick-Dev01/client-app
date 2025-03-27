@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.maverick.clientapp" />
+                  <option name="mobileSdkAppId" value="1:870280279515:android:5f571976eab3e0c623e3fe" />
+                  <option name="projectId" value="devicemanagersystem-70194" />
+                  <option name="projectNumber" value="870280279515" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
