@@ -1,6 +1,8 @@
 package com.maverick.clientapp
 
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -9,6 +11,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.material.textview.MaterialTextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
+import com.maverick.clientapp.services.LockService
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
         if (deviceId.isNullOrEmpty()) {
             // Si no hay ID guardado, redirige al formulario de registro
-            val intent = Intent(this, RegisterIdActivity::class.java)
+            val intent = Intent(this, LockService::class.java)
             startActivity(intent)
             finish()
         } else {
@@ -48,6 +51,7 @@ class MainActivity : AppCompatActivity() {
             }
             escucharEstadoDispositivo(deviceId)
         }
+
     }
 
     private fun escucharEstadoDispositivo(deviceId: String) {
@@ -66,14 +70,14 @@ class MainActivity : AppCompatActivity() {
                     val document = snapshot.documents[0]
                     val estado = document.getString("estado") ?: "activo"
 
-                    // 🔹 Guardar el IMEI registrado desde ClientApp
-                    document.reference.update("imeiClient", deviceId)
-
                     if (estado == "bloqueado") {
-                        textStatus.text = "Dispositivo BLOQUEADO"
-                        layoutMain.setBackgroundColor(Color.RED)
-                        btnCambiarId.visibility = View.GONE
+                        // 🔴 Ir a pantalla de bloqueo
+                        val intent = Intent(this, BlockScreenActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        startActivity(intent)
+                        finish()
                     } else {
+                        // 🟢 Mostrar que está activo
                         textStatus.text = "Dispositivo ACTIVO"
                         layoutMain.setBackgroundColor(Color.parseColor("#4CAF50")) // Verde
                         btnCambiarId.visibility = View.GONE
@@ -85,5 +89,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
+
 
 }
