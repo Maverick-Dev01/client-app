@@ -53,7 +53,6 @@ class MainActivity : AppCompatActivity() {
     private fun escucharEstadoDispositivo(deviceId: String) {
         val db = FirebaseFirestore.getInstance()
 
-        // 🔹 Buscar por el campo "imei", no por ID de documento
         db.collection("dispositivos")
             .whereEqualTo("imei", deviceId)
             .addSnapshotListener { snapshot, error ->
@@ -66,6 +65,9 @@ class MainActivity : AppCompatActivity() {
                 if (snapshot != null && !snapshot.isEmpty) {
                     val document = snapshot.documents[0]
                     val estado = document.getString("estado") ?: "activo"
+
+                    // 🔹 Guardar el IMEI registrado desde ClientApp
+                    document.reference.update("imeiClient", deviceId)
 
                     if (estado == "bloqueado") {
                         textStatus.text = "Dispositivo BLOQUEADO"
@@ -80,8 +82,8 @@ class MainActivity : AppCompatActivity() {
                     textStatus.text = "Dispositivo no encontrado"
                     layoutMain.setBackgroundColor(Color.GRAY)
                     btnCambiarId.visibility = View.VISIBLE
-
                 }
             }
     }
+
 }
