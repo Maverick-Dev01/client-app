@@ -30,8 +30,10 @@ class RegisterIdActivity : AppCompatActivity() {
                 Toast.makeText(this, "IMEI guardado correctamente", Toast.LENGTH_SHORT).show()
 
                 // 🔸 Iniciar la actividad principal
-                startActivity(Intent(this, MainActivity::class.java))
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
                 finish()
+
             } else {
                 Toast.makeText(this, "Por favor ingresa el IMEI", Toast.LENGTH_SHORT).show()
             }
