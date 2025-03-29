@@ -1,5 +1,21 @@
 package com.maverick.clientapp
 
+/**
+ * RegisterIdActivity
+ *
+ * Actividad encargada de registrar manualmente el identificador del dispositivo (IMEI o ANDROID_ID)
+ * que será usado para enlazar el dispositivo con un documento específico en Firestore.
+ *
+ * Características:
+ * - Permite al vendedor ingresar el identificador del dispositivo manualmente.
+ * - Almacena el valor en SharedPreferences bajo la clave "deviceId".
+ * - Redirige a MainActivity una vez guardado correctamente.
+ *
+ * Esta actividad solo se muestra una vez al inicio, y es fundamental para que la app
+ * pueda luego verificar su estado (activo o bloqueado) en Firestore.
+ */
+
+
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -16,28 +32,37 @@ class RegisterIdActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_id)
 
+        inicializarVista()
+        configurarBotonGuardar()
+    }
+
+    private fun inicializarVista() {
         editDeviceId = findViewById(R.id.editDeviceId)
         btnGuardar = findViewById(R.id.btnGuardar)
+    }
 
+    private fun configurarBotonGuardar() {
         btnGuardar.setOnClickListener {
-            val idIngresado = editDeviceId.text.toString().trim()
+            val deviceId = editDeviceId.text.toString().trim()
 
-            if (idIngresado.isNotEmpty()) {
-                // 🔸 Guardar el IMEI ingresado en SharedPreferences
-                val prefs = getSharedPreferences("config", MODE_PRIVATE)
-                prefs.edit().putString("deviceId", idIngresado).apply()
-
+            if (deviceId.isNotEmpty()) {
+                guardarDeviceId(deviceId)
                 Toast.makeText(this, "IMEI guardado correctamente", Toast.LENGTH_SHORT).show()
-
-                // 🔸 Iniciar la actividad principal
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-
+                irAMainActivity()
             } else {
                 Toast.makeText(this, "Por favor ingresa el IMEI", Toast.LENGTH_SHORT).show()
             }
         }
+    }
 
+    private fun guardarDeviceId(id: String) {
+        val prefs = getSharedPreferences("config", MODE_PRIVATE)
+        prefs.edit().putString("deviceId", id).apply()
+    }
+
+    private fun irAMainActivity() {
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 }
