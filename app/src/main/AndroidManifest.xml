@@ -4,7 +4,11 @@
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN"/>
 
     <application
         android:name=".MainApplication"
@@ -16,13 +20,22 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppTheme"
-        tools:targetApi="31"
-        tools:ignore="MissingApplicationIcon">
+        tools:ignore="MissingApplicationIcon"
+        tools:targetApi="31">
 
         <service
             android:name=".services.LockService"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".services.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
 
         <activity
             android:name=".MainActivity"
@@ -39,10 +52,10 @@
 
         <activity
             android:name=".BlockScreenActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTop"
-            android:excludeFromRecents="true" />
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <receiver
             android:name=".receivers.BootReceiver"
@@ -55,8 +68,8 @@
 
         <receiver
             android:name=".receivers.DeviceAdminReceiver"
-            android:permission="android.permission.BIND_DEVICE_ADMIN"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
 
             <meta-data
                 android:name="android.app.device_admin"
@@ -67,7 +80,12 @@
             </intent-filter>
         </receiver>
 
-
+        <receiver android:name=".DeviceStateReceiver" android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.maverick.clientapp.STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
 
 
     </application>
