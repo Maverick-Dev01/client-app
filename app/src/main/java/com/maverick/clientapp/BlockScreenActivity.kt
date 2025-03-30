@@ -50,6 +50,24 @@ class BlockScreenActivity : Activity() {
         escucharEstadoEnFirestore()
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        val prefs = getSharedPreferences("config", MODE_PRIVATE)
+        val deviceId = prefs.getString("deviceId", null) ?: return
+
+        val db = FirebaseFirestore.getInstance()
+        db.collection("dispositivos")
+            .whereEqualTo("imei", deviceId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val estado = snapshot.documents.firstOrNull()?.getString("estado") ?: "activo"
+                if (estado == "activo") {
+                    desbloquearDispositivo()
+                }
+            }
+    }
+
 
     private fun configurarModoKiosko() {
         val policyManager = getSystemService(DEVICE_POLICY_SERVICE) as DevicePolicyManager
@@ -99,14 +117,23 @@ class BlockScreenActivity : Activity() {
     }
 
     private fun desbloquearDispositivo() {
-        stopLockTask()
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        try {
+            stopLockTask()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        startActivity(intent)
-        finish()
+
+        // 🔁 Esperamos brevemente antes de salir, para asegurarnos que el modo kiosko se detuvo bien
+        window.decorView.postDelayed({
+            val intent = Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            startActivity(intent)
+            finish()
+            overridePendingTransition(0, 0) // Sin animación
+        }, 1000) // 1 segundo de espera
     }
+
 
     override fun onBackPressed() {
         // Desactiva botón de retroceso
