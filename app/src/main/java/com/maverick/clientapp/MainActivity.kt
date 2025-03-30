@@ -44,6 +44,11 @@ class MainActivity : AppCompatActivity() {
             mostrarPantallaPrincipal()
             escucharEstadoDispositivo(deviceId)
         }
+
+        if (!deviceId.isNullOrEmpty()) {
+            val serviceIntent = Intent(this, LockService::class.java)
+            startService(serviceIntent)
+        }
     }
 
     private fun redirigirARegistro() {

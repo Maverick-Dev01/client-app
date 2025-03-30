@@ -14,6 +14,7 @@ package com.maverick.clientapp.services
 import android.app.*
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.google.firebase.firestore.FirebaseFirestore
@@ -41,30 +42,40 @@ class LockService : Service() {
 
         if (!deviceId.isNullOrEmpty()) {
             val db = FirebaseFirestore.getInstance()
+
             db.collection("dispositivos")
                 .whereEqualTo("imei", deviceId)
-                .get()
-                .addOnSuccessListener { result ->
-                    val document = result.documents.firstOrNull()
-                    val estado = document?.getString("estado") ?: "activo"
-
-                    if (estado == "bloqueado") {
-                        val lockIntent = Intent(this, BlockScreenActivity::class.java).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        startActivity(lockIntent)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        println("❌ Error en escucha Firestore: ${error.message}")
+                        return@addSnapshotListener
                     }
-                    stopSelf()
-                }
-                .addOnFailureListener {
-                    stopSelf()
+
+                    if (snapshot != null && !snapshot.isEmpty) {
+                        val estado = snapshot.documents[0].getString("estado") ?: "activo"
+                        println("📡 Estado detectado en escucha: $estado")
+
+                        if (estado == "bloqueado") {
+                            println("🔒 Dispositivo bloqueado. Lanzando pantalla de bloqueo.")
+                            Handler(mainLooper).post {
+                                val lockIntent = Intent(this, BlockScreenActivity::class.java).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                }
+                                startActivity(lockIntent)
+                            }
+                        }
+                    }
                 }
         } else {
+            println("⚠️ No se encontró deviceId en LockService")
             stopSelf()
         }
 
-        return START_NOT_STICKY
+        return START_STICKY // Se reinicia automáticamente si el sistema lo mata
     }
+
+
+
 
     override fun onBind(intent: Intent?): IBinder? = null
 

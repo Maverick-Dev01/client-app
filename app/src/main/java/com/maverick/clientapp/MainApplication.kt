@@ -27,7 +27,6 @@ class MainApplication : Application() {
         super.onCreate()
 
         inicializarFirebase()
-        lanzarLockServiceSiEsNecesario()
         sincronizarTokenFCM()
     }
 
