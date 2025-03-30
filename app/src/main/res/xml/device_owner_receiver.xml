@@ -1,0 +1,20 @@
+<!--
+    device_owner_receiver.xml
+
+    Archivo XML requerido para registrar la aplicación como administrador del dispositivo.
+    Aquí se especifican las políticas que la app puede aplicar mediante DevicePolicyManager.
+
+    Políticas activadas:
+    - force-lock: Permite bloquear el dispositivo de forma inmediata (lockNow).
+    - wipe-data: Permite borrar todos los datos del dispositivo (no se usa en este proyecto, pero está declarado).
+
+    Este archivo debe estar en la carpeta res/xml y referenciado en el AndroidManifest.xml
+    dentro del receiver DeviceAdminReceiver.
+-->
+
+
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+        <force-lock />
+    </uses-policies>
+</device-admin>
