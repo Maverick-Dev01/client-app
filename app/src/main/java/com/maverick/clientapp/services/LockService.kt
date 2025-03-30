@@ -43,6 +43,7 @@ class LockService : Service() {
         if (!deviceId.isNullOrEmpty()) {
             val db = FirebaseFirestore.getInstance()
 
+            // 1. Escucha en tiempo real (como ya tenías)
             db.collection("dispositivos")
                 .whereEqualTo("imei", deviceId)
                 .addSnapshotListener { snapshot, error ->
@@ -56,25 +57,48 @@ class LockService : Service() {
                         println("📡 Estado detectado en escucha: $estado")
 
                         if (estado == "bloqueado") {
-                            println("🔒 Dispositivo bloqueado. Lanzando pantalla de bloqueo.")
-                            Handler(mainLooper).post {
-                                val lockIntent = Intent(this, BlockScreenActivity::class.java).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                                }
-                                startActivity(lockIntent)
-                            }
+                            bloquearDispositivo()
                         }
                     }
                 }
-        } else {
+
+            // 2. Polling inicial durante 1 minuto (cada 10 segundos)
+            val handler = Handler(mainLooper)
+            val startTime = System.currentTimeMillis()
+
+            val pollingRunnable = object : Runnable {
+                override fun run() {
+                    val elapsed = System.currentTimeMillis() - startTime
+                    if (elapsed > 60000) return  // Deja de intentar después de 1 minuto
+
+                    db.collection("dispositivos")
+                        .whereEqualTo("imei", deviceId)
+                        .get()
+                        .addOnSuccessListener { result ->
+                            val estado = result.documents.firstOrNull()?.getString("estado") ?: "activo"
+                            println("🕓 Polling - Estado: $estado")
+                            if (estado == "bloqueado") {
+                                bloquearDispositivo()
+                            } else {
+                                handler.postDelayed(this, 10000) // Reintenta en 10 segundos
+                            }
+                        }
+                        .addOnFailureListener {
+                            println("❌ Polling fallido: ${it.message}")
+                            handler.postDelayed(this, 10000)
+                        }
+                }
+            }
+
+            handler.post(pollingRunnable)
+        }
+        else {
             println("⚠️ No se encontró deviceId en LockService")
             stopSelf()
         }
 
         return START_STICKY // Se reinicia automáticamente si el sistema lo mata
     }
-
-
 
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -99,4 +123,12 @@ class LockService : Service() {
             manager?.createNotificationChannel(channel)
         }
     }
+
+    private fun bloquearDispositivo() {
+        val lockIntent = Intent(this, BlockScreenActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        startActivity(lockIntent)
+    }
+
 }
