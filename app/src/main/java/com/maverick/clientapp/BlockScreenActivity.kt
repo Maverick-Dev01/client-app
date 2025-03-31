@@ -1,49 +1,55 @@
 package com.maverick.clientapp
 
-/**
- * BlockScreenActivity
- *
- * Esta actividad se muestra cuando el dispositivo ha sido marcado como "bloqueado" en Firestore.
- * Su propósito es restringir completamente el uso del dispositivo, evitando el acceso al sistema,
- * botones, barra de navegación, y cualquier intento de evasión.
- *
- * Características clave:
- * - Se ejecuta en pantalla completa, ocultando barra de estado y navegación.
- * - Inicia el modo kiosko (`startLockTask`) si la app está registrada como Device Owner.
- * - Escucha cambios en Firestore y desbloquea el dispositivo automáticamente si el estado cambia a "activo".
- * - Impide navegación hacia atrás y acceso al sistema (Home, Notificaciones, etc.).
- */
-
-
 import android.app.Activity
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Intent
+import android.media.MediaPlayer
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
+import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.view.WindowCompat
 import com.google.firebase.firestore.FirebaseFirestore
 import com.maverick.clientapp.receivers.DeviceAdminReceiver
 
 class BlockScreenActivity : Activity() {
 
+    private lateinit var lockIcon: ImageView
+    private lateinit var textMessage: TextView
+    private lateinit var btnAceptar: Button
+    private lateinit var layout: LinearLayout
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // ✅ PRIMERO se carga el layout
         setContentView(R.layout.activity_block_screen)
 
-        // ✅ Ahora sí puedes acceder a las vistas
-        val lockIcon = findViewById<ImageView>(R.id.lockIcon)
+        lockIcon = findViewById(R.id.lockIcon)
+        textMessage = findViewById(R.id.textBlockMessage)
+        btnAceptar = findViewById(R.id.btnAceptar)
+        layout = findViewById(R.id.layoutBlock)
+
         val anim = AnimationUtils.loadAnimation(this, R.anim.heartbeat)
         lockIcon.startAnimation(anim)
 
-        if (!isTaskRoot) {
-            finishAffinity()
+        val modoActivo = intent.getStringExtra("modo") == "activo"
+
+        if (modoActivo) {
+            lockIcon.setImageResource(R.drawable.ic_unlock)
+            textMessage.text = "Este dispositivo está DESBLOQUEADO.\nPuedes usarlo con normalidad."
+            btnAceptar.visibility = View.VISIBLE
+            btnAceptar.setOnClickListener { finishAffinity() }
+
+            configurarInterfaz()
+            return
         }
+
+        if (!isTaskRoot) finishAffinity()
 
         configurarModoKiosko()
         configurarInterfaz()
@@ -62,17 +68,13 @@ class BlockScreenActivity : Activity() {
             .get()
             .addOnSuccessListener { snapshot ->
                 val estado = snapshot.documents.firstOrNull()?.getString("estado") ?: "activo"
-                if (estado == "activo") {
-                    desbloquearDispositivo()
-                }
+                if (estado == "activo") desbloquearVisualmente()
             }
     }
-
 
     private fun configurarModoKiosko() {
         val policyManager = getSystemService(DEVICE_POLICY_SERVICE) as DevicePolicyManager
         val adminComponent = ComponentName(this, DeviceAdminReceiver::class.java)
-
 
         if (policyManager.isDeviceOwnerApp(packageName)) {
             policyManager.setLockTaskPackages(adminComponent, arrayOf(packageName))
@@ -81,15 +83,11 @@ class BlockScreenActivity : Activity() {
     }
 
     private fun configurarInterfaz() {
-
-        // Pantalla completa sin barras
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
-
-        // Ocultar UI del sistema
         window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_IMMERSIVE
                         or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -111,35 +109,35 @@ class BlockScreenActivity : Activity() {
 
                 val estado = snapshot.documents[0].getString("estado") ?: "activo"
                 if (estado == "activo") {
-                    desbloquearDispositivo()
+                    desbloquearVisualmente()
                 }
             }
     }
 
-    private fun desbloquearDispositivo() {
+    private fun desbloquearVisualmente() {
         try {
             stopLockTask()
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) {}
+
+        lockIcon.setImageResource(R.drawable.ic_unlock)
+        textMessage.text = "Este dispositivo está DESBLOQUEADO.\nPuedes usarlo normalmente."
+        btnAceptar.visibility = View.VISIBLE
+        btnAceptar.setOnClickListener { finishAffinity() }
+
+        val unlockAnim = AnimationUtils.loadAnimation(this, R.anim.unlock_spin_fade)
+        lockIcon.startAnimation(unlockAnim)
+
+        val vibrator = getSystemService(VIBRATOR_SERVICE) as? android.os.Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(android.os.VibrationEffect.createOneShot(200, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            vibrator?.vibrate(200)
         }
 
-        // 🔁 Esperamos brevemente antes de salir, para asegurarnos que el modo kiosko se detuvo bien
-        window.decorView.postDelayed({
-            val intent = Intent(this, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            }
-            startActivity(intent)
-            finish()
-            overridePendingTransition(0, 0) // Sin animación
-        }, 1000) // 1 segundo de espera
+        val mediaPlayer = MediaPlayer.create(this, R.raw.unlock_sound)
+        mediaPlayer.start()
     }
 
-
-    override fun onBackPressed() {
-        // Desactiva botón de retroceso
-    }
-
-    override fun onUserLeaveHint() {
-        // Evita ir al Home
-    }
+    override fun onBackPressed() {}
+    override fun onUserLeaveHint() {}
 }

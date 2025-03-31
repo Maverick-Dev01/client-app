@@ -12,11 +12,10 @@ package com.maverick.clientapp
  *
  * Este enfoque permite mantener la lógica de arranque y sincronización centralizada.
  */
-
-
 import android.app.Application
 import android.content.Intent
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import com.maverick.clientapp.services.LockService
@@ -27,11 +26,27 @@ class MainApplication : Application() {
         super.onCreate()
 
         inicializarFirebase()
+        autenticarConCorreoFijo() // 🆕
         sincronizarTokenFCM()
     }
 
     private fun inicializarFirebase() {
         FirebaseApp.initializeApp(this)
+    }
+
+    private fun autenticarConCorreoFijo() {
+        val correo = "admin@gmail.com"
+        val contrasena = "mergeadmin01" // Usa una contraseña fuerte en producción
+
+        FirebaseAuth.getInstance().signInWithEmailAndPassword(correo, contrasena)
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    println("✅ Inicio de sesión exitoso con $correo")
+                    lanzarLockServiceSiEsNecesario()
+                } else {
+                    println("❌ Error al iniciar sesión: ${it.exception}")
+                }
+            }
     }
 
     private fun lanzarLockServiceSiEsNecesario() {
@@ -65,3 +80,4 @@ class MainApplication : Application() {
         }
     }
 }
+

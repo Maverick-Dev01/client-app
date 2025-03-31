@@ -104,10 +104,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun mostrarEstado(mensaje: String, color: Int, mostrarBoton: Boolean) {
-        textStatus.text = mensaje
-        layoutMain.setBackgroundColor(color)
-        btnCambiarId.visibility = if (mostrarBoton) View.VISIBLE else View.GONE
+        if (mensaje.contains("ACTIVO")) {
+            val intent = Intent(this, BlockScreenActivity::class.java).apply {
+                putExtra("modo", "activo") // Modo desbloqueado
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            startActivity(intent)
+            finish()
+        } else {
+            textStatus.text = mensaje
+            layoutMain.setBackgroundColor(color)
+            btnCambiarId.visibility = if (mostrarBoton) View.VISIBLE else View.GONE
+        }
     }
+
 
     private fun irABloqueo() {
         val intent = Intent(this, BlockScreenActivity::class.java).apply {
